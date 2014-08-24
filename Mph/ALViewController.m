@@ -8,10 +8,13 @@
 
 #import "ALViewController.h"
 #import "AZSocketIO/AZSocketIO.h"
+#import <CoreMotion/CoreMotion.h>
 
 @interface ALViewController ()
 {
     AZSocketIO* _socket;
+    CMMotionManager *_motionManager;
+    BOOL _socketActive;
 }
 
 @end
@@ -24,9 +27,29 @@
 {
     [super viewDidLoad];
 	// Do any additional setup after loading the view, typically from a nib.
+    _socketActive = false;
+    _motionManager = [[CMMotionManager alloc] init];
+    
+    if (_motionManager.accelerometerAvailable) {
+        _motionManager.accelerometerUpdateInterval = 0.1;
+        
+        CMAccelerometerHandler handler = ^(CMAccelerometerData *data, NSError *error) {
+            if (!_socketActive) { return; }
+            double timestamp = data.timestamp;
+            double x = data.acceleration.x;
+            double y = data.acceleration.y;
+            double z = data.acceleration.z;
+            double mag = 10 * ( sqrt(x*x + y*y + z*z) - 1 );
+            NSLog(@"%@",[NSNumber numberWithDouble:mag]);
+            [_socket emit:@"send swing" args:[NSNumber numberWithDouble:mag] error:nil];
+        };
+        
+        [_motionManager startAccelerometerUpdatesToQueue:[NSOperationQueue currentQueue] withHandler:handler];
+    }
     _socket = [[AZSocketIO alloc] initWithHost:@"api.m-ph.org" andPort:@"3000" secure:NO];
     [_socket connectWithSuccess:^{
         NSLog(@"connect");
+        _socketActive = true;
     } andFailure:^(NSError *error) {
         NSLog(@"%@",error);
     }];
