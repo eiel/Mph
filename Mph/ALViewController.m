@@ -34,6 +34,8 @@
     [_socket setEventReceivedBlock:^(NSString *eventName, id data) {
         if ([@"push swing" isEqual:eventName]) {
             [this swing:data];
+        } else if ([@"push msg" isEqual:eventName]) {
+            [this message:data];
         }
     }];
 }
@@ -43,10 +45,33 @@
     _swingLabel.text = [NSString stringWithFormat:@"%@", mags[0]];
 }
 
+- (void)message:(id)msg
+{
+    NSString* message = msg[0];
+    UILabel* label = [UILabel new];
+    label.text = message;
+    NSInteger x = rand() % 300;
+    NSInteger y = rand() % 200 + 100;
+    NSInteger size = rand() % 20+10;
+    label.font = [UIFont systemFontOfSize:size];
+    label.frame = CGRectMake(x, y, 100, size);
+    [self.view addSubview:label];
+}
+
 - (void)didReceiveMemoryWarning
 {
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
 
+- (IBAction)tapMessage:(id)sender {
+    NSError* error = nil;
+    NSLog(@"%@",_messageField.text);
+    [_socket emit:@"send msg" args:@[_messageField.text] error:&error];
+    if (error){
+        NSLog(@"%@",error);
+    } else {
+        _messageField.text = @"";
+    }
+}
 @end

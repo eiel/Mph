@@ -11,5 +11,8 @@
 @interface ALViewController : UIViewController
 
 @property (weak, nonatomic) IBOutlet UILabel *swingLabel;
+@property (weak, nonatomic) IBOutlet UITextField *messageField;
+
+- (IBAction)tapMessage:(id)sender;
 
 @end
